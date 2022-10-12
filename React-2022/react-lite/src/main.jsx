@@ -8,4 +8,6 @@ const element = (
 
 const root = createRoot(document.getElementById('root'));
 
-console.log(element, root);
+root.render(element);
+
+console.log(root);

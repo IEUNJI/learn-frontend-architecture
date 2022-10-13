@@ -1,3 +1,5 @@
+import { markUpdateLaneFromFiberToRoot } from './ReactFiberConcurrentUpdates';
+
 export function initialUpdateQueue(fiber) {
   const queue = {
     shared: {
@@ -26,4 +28,6 @@ export function enqueueUpdate(fiber, update) {
     pending.next = update;
   }
   updateQueue.shared.pending = update;
+
+  return markUpdateLaneFromFiberToRoot(fiber);
 }

@@ -9,5 +9,3 @@ const element = (
 const root = createRoot(document.getElementById('root'));
 
 root.render(element);
-
-console.log(root);

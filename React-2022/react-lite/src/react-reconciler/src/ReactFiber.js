@@ -1,4 +1,4 @@
-import { HostRoot } from './ReactWorkTags';
+import { HostRoot, IndeterminateComponent, HostComponent } from './ReactWorkTags';
 import { NoFlags } from './ReactFiberFlags';
 
 function FiberNode(tag, pendingProps, key) {
@@ -57,4 +57,26 @@ export function createWorkInProgress(current, pendingProps) {
   workInProgress.index = current.index;
 
   return workInProgress;
+}
+
+/**
+ * 根据虚拟 DOM 创建 Fiber 节点
+ * @param {*} element 虚拟 DOM
+ */
+export function createFiberFromElement(element) {
+  const { type, key, props: pendingProps } = element;
+
+  return createFiberFromTypeAndProps(type, key, pendingProps);
+}
+
+function createFiberFromTypeAndProps(type, key, pendingProps) {
+  let tag = IndeterminateComponent;
+  if (typeof type === 'string') {
+    tag = HostComponent;
+  }
+
+  const fiber = createFiber(tag, pendingProps, key);
+  fiber.type = type;
+
+  return fiber;
 }

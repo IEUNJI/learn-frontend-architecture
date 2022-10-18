@@ -19,3 +19,9 @@ export default function (prefix, workInProgress) {
 
   console.log(str);
 };
+
+const indent = { number: 0 };
+
+export {
+  indent
+};

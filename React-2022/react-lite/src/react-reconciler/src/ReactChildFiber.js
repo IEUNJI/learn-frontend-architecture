@@ -1,6 +1,7 @@
 import { REACT_ELEMENT_TYPE } from 'shared/ReactSymbols';
-import { createFiberFromElement } from './ReactFiber';
+import { createFiberFromElement, createFiberFromText } from './ReactFiber';
 import { Placement } from './ReactFiberFlags';
+import isArray from 'shared/isArray';
 
 /**
  * 工厂函数
@@ -21,6 +22,57 @@ function createChildReconciler(shouldTrackSideEffects) {
     return newFiber;
   }
 
+  function createChild(returnFiber, newChild) {
+    if ((typeof newChild === 'string' && newChild !== '') || typeof newChild === 'number') {
+      const created = createFiberFromText(`${newChild}`);
+      created.return = returnFiber;
+      return created;
+    }
+
+    if (typeof newChild === 'object' && newChild !== null) {
+      switch (newChild.$$typeof) {
+        case REACT_ELEMENT_TYPE:
+          const created = createFiberFromElement(newChild);
+          created.return = returnFiber;
+          return created;
+        default:
+          break;
+      }
+    }
+
+    return null;
+  }
+
+  function placeChild(newFiber, newIndex) {
+    newFiber.index = newIndex;
+
+    if (shouldTrackSideEffects) {
+      newFiber.flags |= Placement;
+    }
+  }
+
+  function reconcileChildrenArray(returnFiber, currentFirstFiber, newChildren) {
+    let resultingFirstChild = null;
+    let previousNewFiber = null;
+    let newIndex = 0;
+
+    for (; newIndex < newChildren.length; newIndex++) {
+      const newFiber = createChild(returnFiber, newChildren[newIndex]);
+      if (newFiber === null) continue;
+      placeChild(newFiber, newIndex);
+
+      if (previousNewFiber === null) {
+        resultingFirstChild = newFiber;
+      } else {
+        previousNewFiber.sibling = newFiber;
+      }
+
+      previousNewFiber = newFiber;
+    }
+
+    return resultingFirstChild;
+  }
+
   /**
    * 比较子 Fibers
    * @param {*} returnFiber 新的父 Fiber
@@ -36,6 +88,12 @@ function createChildReconciler(shouldTrackSideEffects) {
           break;
       }
     }
+
+    if (isArray(newChild)) {
+      return reconcileChildrenArray(returnFiber, currentFirstFiber, newChild);
+    }
+
+    return null;
   }
 
   return reconcileChildFibers;

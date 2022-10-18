@@ -1,6 +1,7 @@
 import { scheduleCallback } from 'scheduler';
 import { createWorkInProgress } from './ReactFiber';
 import { beginWork } from './ReactFiberBeginWork';
+import { completeWork } from './ReactFiberCompleteWork';
 
 let workInProgress = null; // 进行中的工作
 
@@ -46,9 +47,32 @@ function performUnitOfWork(unitOfWork) {
   unitOfWork.memoizedProps = unitOfWork.pendingProps;
 
   if (next === null) {
-    workInProgress = null;
-    // completeUnitOfWork(unitOfWork);
+    completeUnitOfWork(unitOfWork);
   } else {
     workInProgress = next;
   }
+}
+
+function completeUnitOfWork(unitOfWork) {
+  let completedWork = unitOfWork;
+
+  do {
+    const current = completedWork.alternate;
+    const returnFiber = completedWork.return;
+
+    // 执行此 Fiber 的完成工作
+    completeWork(current, completedWork);
+
+    const siblingFiber = completedWork.sibling;
+
+    // 存在弟弟, 继续工作循环
+    if (siblingFiber !== null) {
+      workInProgress = siblingFiber;
+      return;
+    }
+
+    // 不存在弟弟, 既完成了父节点的最后一个子节点
+    completedWork = returnFiber;
+    workInProgress = completedWork;
+  } while (completedWork !== null);
 }
